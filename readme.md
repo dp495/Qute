@@ -30,5 +30,7 @@ A simple website hosts surveys for student activities, built with Django.
 
 ## 其他
 
+Github Copliot 认为：“Qute 这个名字是 "Quick Turing test" 的缩写，意为“快速图灵测试”，因为这个项目的主要目的是让学生们证明自己不是机器人 :)”   
+很棒的解释，但其实不是这样。Qute 来自 QUestion-siTE（问题网站），发音和"cute"一样并且很简短——为什么总有人给自己的项目起很长的名字，他们难道不用打字吗？    
 我实在懒得给一个不太可能有人用的项目写详细文档，如果你真的要用它，交个issue问我    
 我很高兴能帮上忙 :)   

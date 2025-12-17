@@ -1,7 +1,7 @@
 # Qute
 
-A simple website hosts surveys for student activities, built with Django.
-基于Django实现的简明答题网站，主要用于学生活动答题。
+A simple website hosts surveys for student activities, built with Django.   
+基于Django实现的简明答题网站，主要用于学生活动答题。   
 
 ## 功能
 
@@ -30,5 +30,5 @@ A simple website hosts surveys for student activities, built with Django.
 
 ## 其他
 
-我实在懒得给一个不太可能有人用的项目写详细文档，如果你真的要用它，交个issue问我
-我很高兴能帮上忙 :)
+我实在懒得给一个不太可能有人用的项目写详细文档，如果你真的要用它，交个issue问我    
+我很高兴能帮上忙 :)   

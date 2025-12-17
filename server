@@ -1,0 +1,12 @@
+#!/bin/bash
+
+VENV_PATH="./.venv/bin/activate"
+
+if [ ! -f "$VENV_PATH" ]; then
+    echo "错误：虚拟环境激活脚本不存在于 '$VENV_PATH'"
+    exit 1
+fi
+
+source "$VENV_PATH"
+
+python ./manage.py runserver 0.0.0.0:12277

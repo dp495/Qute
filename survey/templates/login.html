@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一个用于学生活动的简明答题网站</title>
+    {% load compress %}
+    
+    {% compress css inline %}
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+        /* --- 登录表单样式 --- */
+        .login-form {
+            background-color: #fff;
+            padding: 0.5rem 1.5rem 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 0.5rem;
+        }
+        
+        fieldset {
+            border: 1px solid #aaa;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            
+        }
+
+        label,legend {
+            display: block;
+            font-weight: bold;
+            margin-top: 0.75rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            box-sizing: border-box; /* 确保 padding 不会增加元素宽度 */
+            font-size: 1rem;
+            margin-top: 0.75rem;
+        }
+
+    </style>
+    {% endcompress %}
+</head>
+<body>
+
+    <div class="container">
+        <h1>简明答题网站</h1>
+        <span>这是一个简明的答题网站的模板</span>
+        <h2>答题规则</h2>
+        <ul>
+            <li>在下方填写学号与姓名即可参与答题</li>
+            <li>题目有多页，每页上方是一些阅读材料，读完材料后即可回答下方的问题</li>
+            <li>所有的客观题均为<b>不定向选择题</b>，选项中<b>至少有一个正确答案</b></li>
+            <li>最后一页是选做的主观题，您可以在那里留下您对我们的宝贵意见</li>
+            <li>题目提交后系统会立刻自动判断是否通过。每人有{{max_count}}次答题机会，只要有一次通过即可领奖</li>
+            <li>向工作人员出示通过界面并登记即可领取奖品</li>
+        </ul>
+
+        <div class="login-form">
+            <h3>答题前请填写：</h3>
+            <form id="login-form">
+                {% csrf_token %}
+                {{ form }}
+                <div id="error-message"><br></div>
+                <button type="submit" class="pwidth">确定</button>
+            </form>
+        </div>
+    </div>
+    {% compress js inline %}
+    <script>
+        
+        const errorMessage = document.getElementById('error-message');
+        const captchaImage = document.querySelector('img.captcha');
+
+        const captchaUpdate = () =>{
+            fetch('/captcha/refresh/',{headers:{'x-requested-with':"XMLHttpRequest"}})
+            .then(response => response.json())
+            .then(data =>{
+                captchaImage.src = data.image_url;
+                const captchaKeyInput = document.getElementById('id_captcha_0');
+                captchaKeyInput.value = data.key;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.textContent = '验证码刷新失败，请重试或刷新页面';
+            });
+        }
+        captchaImage.addEventListener('click' ,captchaUpdate)
+
+        const form = document.getElementById('login-form');
+        form.addEventListener('submit', function(event) {
+            
+            event.preventDefault();
+            const formData = new FormData(event.target)
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.err === 0) {
+                    window.location.href = '/result/';
+                    return;
+                }else {
+                    captchaUpdate()
+                    errorMessage.textContent = data.err;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.textContent = '网络错误，请刷新页面重试';
+            });
+        });
+    </script>
+    {% endcompress %}
+</body>
+</html>

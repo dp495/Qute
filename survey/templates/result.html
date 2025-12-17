@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答题结果</title>
+    {% load compress %}
+
+    {% compress css inline %}
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+        .text-center {
+            text-align: center;
+            margin-top: 0rem;
+        }
+
+        .score {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 0px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+        }
+
+        .score-num{ 
+            height: 10rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5rem;
+            font-weight: bold;
+            color:hsl(7,64%,32%);
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+    </style>
+    {% endcompress %}
+</head>
+<body>
+    <header>
+        <b>您好, {{ name|truncatechars:5 }}</b>
+        <button id="logout">退出</button>
+    </header>
+    <div class="container">
+        <div class="score">
+            <h2 class="text-center">答题结果</h2>
+            <h3>学号：{{ username }}</h3>
+            <h3>姓名：{{ name }}</h3>
+            <span>您的最好成绩是：</span>
+            <div class="score-num" onclick="window.location.reload();"{% if is_pass %} style="color:hsl(147,64%,32%)" {% endif %}>
+                {% if is_pass %}
+                通过
+                {% else %}
+                未通过
+                {% endif %}
+            </div>
+            <b>
+                {% if is_pass %}
+                答的很好！向工作人员出示成绩页面并登记即可领取奖品
+                {% else %}
+                不好意思，下次答题请更加细心
+                {% endif %}
+            </b>
+            <div id="error-message"><br></div>
+            <button id="b1" class="pwidth">重新答题</button>
+        </div>
+    </div>
+
+    {% compress js inline %}
+    <script>
+        const errorMessage = document.getElementById('error-message');
+        const cleanerror = () => { errorMessage.textContent = ' '; }
+
+        // retry
+        document.getElementById('b1').addEventListener('click', function() {
+            const remain = '{{ remain }}';
+            if (Number(remain) <= 0) {
+                alert('没有剩余答题机会了');
+                return;
+            }
+            if (!confirm('还剩'+remain+'次机会，确定重新答题吗？')) {
+                return;
+            }
+            fetch('/result/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'retry'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.err === 0) {
+                    window.location.href = '/survey/';
+                }else {
+                    console.error('Error:', data.err);
+                    errorMessage.textContent = data.err;
+                    setTimeout(cleanerror, 3000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.textContent = '请重试';
+                setTimeout(cleanerror, 3000);
+                })
+        })
+    </script>
+    <script src="{% static 'logout.js' %}"></script>
+    {% endcompress %}
+</body>
+</html>

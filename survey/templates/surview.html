@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答卷{{ survey.id }}</title>
+    {% load compress %}
+
+    {% compress css inline %}
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+        .answer{
+            background-color: floralwhite;
+            font-family: monospace;
+        }
+    </style>
+    {% endcompress %}
+</head>
+<body>
+    <div class="container">
+        <h2>基本信息</h2>
+        <p>学号：{{ survey.student.username }}</p>
+        <p>姓名：{{ survey.student.name }}</p>
+        <p>类型：{{ survey.is_small|yesno:"小表,大表"}}</p>
+        <p>提交时间：{{ survey.submit_time }}</p>
+        <p>成绩：{{ survey.score }} / {{ max_score }}, {% widthratio survey.score max_score 100 %}%</p>
+        <p>提交过的所有答卷：
+            {% for s in all_surveys %}
+                <a href="/liuanhuamingyouyicun/view/{{ s.id }}/">{{ s.id }}</a>
+                {% if not forloop.last %}、{% endif %}
+            {% endfor %}
+        </p>
+        
+        <h2>问卷内容</h2>
+            {% for q in pn %}
+                <p><strong>{{ forloop.counter }}. {{ q.question }}</strong></p>
+                {% for c in q.choices %}
+                    <span>&nbsp;&nbsp; {{ c|safe }}</span><br>
+                {% endfor %}
+                <br>
+            {% endfor %}
+        
+        <h2>主观题回答</h2>
+            {% for fq in fb %}
+                <div class="question-card">
+                    <span class="question-title">问题 {{ forloop.counter }}</span>
+                    <p>{{ fq.q }}</p>
+                    <div class="answer">{{ fq.a }}</div>
+                </div>
+            {% endfor %}
+        
+</body>
+</html>

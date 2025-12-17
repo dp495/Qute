@@ -1,0 +1,5 @@
+#!/bin/bash
+
+xfce4-terminal --title=frp -x ./network/frp 
+#xfce4-terminal --tab --title=QRcode -x ./network/ip2qr
+xfce4-terminal --tab --title=server -x ./server 

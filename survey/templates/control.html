@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制台</title>
+    {% load compress %}
+
+    {% compress css inline %}
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+        
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background-color: hsl(60,5%,94%);
+        }
+
+        button{
+            padding: 0.4rem;
+            border-radius: 0.25rem;
+            margin-right: 1rem;
+        }
+
+        .sur-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .sur-table th, .sur-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sur-table th {
+            background-color: hsl(210,30%,30%);
+            font-weight: bold;
+            color: floralwhite;
+        }
+
+        .sur-table tr:hover {
+            background-color: hsl(210,30%,98%);
+        }
+
+    </style>
+    {% endcompress %}
+</head>
+<body>
+    <header>
+        <b>当前状态：{{ is_large|yesno:"大表,小表" }}</b>
+
+        <div>
+            <b>切换为：</b>
+            <button id="btn-large">大表</button>
+            <button id="btn-small">小表</button>
+        </div>
+    </header>
+    <div class="container">
+        <div class="question-card">
+            <h3>系统信息总览</h3>
+            <p>当前用户数量：{{ user_count }}</p>
+            <p>提交答卷数量：{{ sur_count }}</p>
+            <p>填写了主观题的答卷：{{ fbd_count }}</p>
+            <p>填写了最后一题的答卷：{{ all_fbd_count }}</p>
+            <p>小表最高分：{{ max_small }}</p>
+            <p>大表最高分：{{ max_large }}</p>
+            <br>
+            <a href="/liuanhuamingyouyicun/admin/">系统自带的管理界面</a>
+        </div>
+
+        <h2>填写了主观题的答卷</h2>
+        <h3>有最后一题</h3>
+        <table class="sur-table">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>名字</th>
+                    <th>成绩</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sur in all_fbd_surveys %}
+                <tr>
+                    <td>{{ sur.student.username }}</td>
+                    <td>{{ sur.student.name|truncatechars:7 }}</td>
+                    <td>{{ sur.score }}</td>
+                    <td>
+                        <a href="/liuanhuamingyouyicun/view/{{sur.id}}">查看</a>
+                        &nbsp;|&nbsp;
+                        <a href="/liuanhuamingyouyicun/admin/survey/onesurvey/{{sur.id}}/change/">修改</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>无最后一题</h3>
+        <table class="sur-table">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>名字</th>
+                    <th>成绩</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sur in part_fbd_surveys %}
+                <tr>
+                    <td>{{ sur.student.username }}</td>
+                    <td>{{ sur.student.name|truncatechars:7 }}</td>
+                    <td>{{ sur.score }}</td>
+                    <td>
+                        <a href="/liuanhuamingyouyicun/view/{{sur.id}}">查看</a>
+                        &nbsp;|&nbsp;
+                        <a href="/liuanhuamingyouyicun/admin/survey/onesurvey/{{sur.id}}/change/">修改</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>最近7个提交</h2>
+        <table class="sur-table">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>名字</th>
+                    <th>成绩</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sur in new_surveys %}
+                <tr>
+                    <td>{{ sur.student.username }}</td>
+                    <td>{{ sur.student.name|truncatechars:7 }}</td>
+                    <td>{{ sur.score }}</td>
+                    <td>
+                        <a href="/liuanhuamingyouyicun/view/{{sur.id}}">查看</a>
+                        &nbsp;|&nbsp;
+                        <a href="/liuanhuamingyouyicun/admin/survey/onesurvey/{{sur.id}}/change/">修改</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>未通过答卷</h2>
+        <table class="sur-table">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>名字</th>
+                    <th>成绩</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sur in fail_surveys %}
+                <tr>
+                    <td>{{ sur.student.username }}</td>
+                    <td>{{ sur.student.name|truncatechars:7 }}</td>
+                    <td>{{ sur.score }}</td>
+                    <td>
+                        <a href="/liuanhuamingyouyicun/view/{{sur.id}}">查看</a>
+                        &nbsp;|&nbsp;
+                        <a href="/liuanhuamingyouyicun/admin/survey/onesurvey/{{sur.id}}/change/">修改</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% compress js inline %}
+    <script>
+        const is_large = {{ is_large|yesno:"true,false" }};
+        function setSize(size) {
+            fetch('/liuanhuamingyouyicun/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: size
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.err === 0) {
+                    window.location.reload();
+                }else {
+                    console.error('Error:', data.err);
+                    alert(data.err);
+                }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('请求失败，请检查网络连接。');
+                });
+        }
+
+        document.getElementById('btn-large').addEventListener('click', () => {
+            if(!is_large) setSize('large');
+        });
+    
+        document.getElementById('btn-small').addEventListener('click', () => {
+            if(is_large) setSize('small');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!is_large) {
+                document.getElementById('btn-small').disabled = true;
+            } else {
+                document.getElementById('btn-large').disabled = true;
+            }
+        });
+    </script>
+    {% endcompress %}
+</body>
+</html>

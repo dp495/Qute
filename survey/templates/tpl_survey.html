@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动题目-第{{ current_page }}页</title>
+    {% load compress %}
+
+    {% compress css inline %}
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+
+        .question-number {
+            background-color: hsl(210,30%,30%);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .options-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .option-item {
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .option-item.selected {
+            background-color: hsl(210,30%,90%);
+            border-color: hsl(210,30%,60%);
+        }
+        
+        .checkbox-container {
+            font-size: 1.1rem;
+            vertical-align: baseline;
+            
+        }
+        .option-label {
+            margin-left: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #e0e0e0;
+            margin: 1rem 0;
+            overflow: hidden;           
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: hsl(210,30%,30%);
+            width: 0%;
+        }
+    </style>
+    {% endcompress %}
+</head>
+<body>
+    <header>
+        <b>您好, {{ name|truncatechars:5 }}</b>
+        <button id="logout">退出</button>
+    </header>
+
+    <div class="container">
+
+        <div>
+            {% block text %}
+            {% endblock text %}
+            <h3>根据材料内容回答下列问题：</h3>            
+        </div>
+
+        <div id="questions-container">
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <div class="page-navigation">
+            <button id="prev-page">&lt;上一页</button>
+            <b>第 {{current_page}} / {{total_pages}} 页</b>
+            <button id="next-page">下一页&gt;</button>
+        </div> 
+        
+        <br>
+    </div>
+
+    {% compress js inline %}
+    <script src="{% static 'logout.js' %}"></script>
+
+    <script>
+        // 题目数据
+        const questionsData = {{ questions|safe }};
+
+        // 当前页面标识
+        const currentPage = {{ current_page }};
+        const totalPages = {{ total_pages }};
+        
+        // 初始化函数
+        function init() {
+            // 设置进度条
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.width = `${(currentPage / totalPages) * 100}%`;
+            // 设置按钮状态
+            document.getElementById('prev-page').disabled = currentPage <= 1;
+
+            // 从localStorage加载已保存的答案
+            loadSavedAnswers();
+            
+            // 渲染题目
+            renderQuestions();
+            
+            // 添加事件监听器
+            document.getElementById('next-page').addEventListener('click', goToNextPage);
+            document.getElementById('prev-page').addEventListener('click', goToPrevPage);
+        }
+        
+        // 渲染题目
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            questionsData.forEach((questionData, index) => {
+                // 创建题目卡片
+                const questionEl = document.createElement('div');
+                questionEl.className = 'question-card';
+                
+                // 添加题目标题
+                const titleEl = document.createElement('div');
+                titleEl.className = 'question-title';
+                titleEl.innerHTML = `
+                    <span class="question-number">${index + 1}</span>
+                    <span>${questionData.question}</span>
+                `;
+                questionEl.appendChild(titleEl);
+                
+                // 创建选项列表
+                const optionsList = document.createElement('ul');
+                optionsList.className = 'options-list';
+                
+                // 复制选项并打乱顺序
+                const shuffledOptions = shuffleOptions([...questionData.choices]);
+                
+                // 添加选项
+                shuffledOptions.forEach((option, optionIndex) => {
+                    const optionEl = document.createElement('li');
+                    optionEl.className = 'option-item';
+                    optionEl.dataset.oi = questionData.choices.indexOf(option);
+                    optionEl.innerHTML = `
+                        <b class="checkbox-container">☐</b>
+                        <span class="option-label">${option}</span>
+                    `;
+                    
+                    // 添加点击事件
+                    optionEl.addEventListener('click', function() {
+                        const checkbox = this.querySelector('.checkbox-container');
+                        let isChecked = checkbox.textContent === '☐';
+                        checkbox.textContent = isChecked ? '☑' : '☐';
+                        this.classList.toggle('selected', isChecked);
+                        saveAnswer(index, parseInt(this.dataset.oi), isChecked);
+                    });
+
+                    optionsList.appendChild(optionEl);
+                });
+                
+                questionEl.appendChild(optionsList);
+                container.appendChild(questionEl);
+            });
+        }
+        
+        // 打乱选项顺序
+        function shuffleOptions(options) {
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            return options;
+        }
+        
+        // 保存答案到localStorage
+        function saveAnswer(questionIndex, optionIndex, isSelected) {
+            const key = `p${currentPage}_answers`;
+            let answers = JSON.parse(localStorage.getItem(key)) || [];
+            
+            if (!answers[questionIndex]) {
+                answers[questionIndex] = [];
+            }
+            
+            if (isSelected) {
+                // 添加选项
+                if (!answers[questionIndex].includes(optionIndex)) {
+                    answers[questionIndex].push(optionIndex);
+                }
+            } else {
+                // 移除选项
+                answers[questionIndex] = answers[questionIndex].filter(idx => idx !== optionIndex);
+            }
+            
+            localStorage.setItem(key, JSON.stringify(answers));
+        }
+        
+        // 从localStorage加载已保存的答案
+        function loadSavedAnswers() {
+            const answers = JSON.parse(localStorage.getItem(`p${currentPage}_answers`)) || [];
+            
+            // 在渲染完成后恢复选择状态
+            setTimeout(() => {
+                Object.keys(answers).forEach(questionIndex => {
+                    const questionCard = document.querySelectorAll('.question-card')[questionIndex];
+                    if (questionCard){
+                        answers[questionIndex].forEach(optionIndex => {
+                            const optionEl = questionCard.querySelector(`.option-item[data-oi="${optionIndex}"]`);
+                            if (optionEl) {
+                                const checkbox = optionEl.querySelector('.checkbox-container');
+                                checkbox.textContent = '☑';
+                                optionEl.classList.add('selected');
+                            }
+                        })
+                    }
+                });
+            }, 0);
+        }
+        
+        // 下一页
+        function goToNextPage() {
+            //检测是否有未作答的题目
+            const unanswered = [];
+            const answers = JSON.parse(localStorage.getItem(`p${currentPage}_answers`)) || [];
+            questionsData.forEach((q, idx) => {
+                if (!answers[idx] || answers[idx].length === 0) {
+                    unanswered.push(idx + 1);
+                }
+            });
+            if (unanswered.length > 0) {
+                if (!confirm(`第 ${unanswered.join(', ')} 题未作答，仍要换页吗？`)) {
+                    return;
+                }
+            }
+            if (currentPage < totalPages) {
+                window.location.href = `/survey/${currentPage + 1}/`;
+            }else if (currentPage === totalPages) {
+                window.location.href = `/feedback/`;
+            }
+        }
+        
+        // 上一页
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                window.location.href = `/survey/${currentPage - 1}/`;
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>    
+    {% endcompress %}
+</body>
+</html>

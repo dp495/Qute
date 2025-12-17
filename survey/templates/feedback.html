@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>意见反馈</title>
+    {% load compress %}
+    
+    {% compress css inline %}
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style0.css' %}">
+    <style>
+        textarea {
+            min-height: 6rem;
+            resize: vertical;
+        }
+    </style>
+    {% endcompress %}
+</head>
+<body>
+    <header>
+        <b>您好, {{ name|truncatechars:5 }}</b>
+        <button id="logout">退出</button>
+    </header>
+    <div class="container">
+        <h2>意见反馈</h2>
+        <p>本页上的题目<b>都不为必答题</b></p>
+
+        <div id="question-container"></div>
+
+        <button id="back-btn" class="pwidth">返回上一页修改</button>
+        <button id="submit-btn" class="pwidth">提交问卷</button>        
+    </div>
+
+    {% compress js inline %}
+    <script>
+        
+        const fbQuestions = {{ fbquestions|safe }};
+        const STORAGE_KEY = 'fbAnswers';
+        const container = document.getElementById('question-container');
+
+        // 2. 动态渲染 HTML
+        container.innerHTML = fbQuestions.map((q, i) => `
+            <div class="question-card">
+                <span class="question-title">问题${i + 1}</span>
+                <p>${q}</p>
+                <textarea class="pwidth" id="answer${i}" maxlength="1000"></textarea>
+            </div>
+        `).join('');
+
+        // 获取所有生成的 textarea
+        const textareas = container.querySelectorAll('textarea');
+
+        // 3. 逻辑功能：加载
+        function loadAnswers() {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            textareas.forEach((el, i) => {
+                if (saved[i]) el.value = saved[i];
+            });
+        }
+
+        // 4. 逻辑功能：保存
+        function saveAnswers() {
+            const data = [];
+            textareas.forEach((el, i) => {
+                data[i] = el.value;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // 5. 事件绑定
+        document.addEventListener('DOMContentLoaded', loadAnswers);
+        
+        container.addEventListener('input', (e) => {
+            if (e.target.tagName === 'TEXTAREA') saveAnswers();
+        });
+        
+        const backBtn = document.getElementById('back-btn');
+        // 返回上一页按钮点击事件
+        backBtn.addEventListener('click', () => {
+            window.location.href = "/survey/-1/";
+        });
+        
+        //提交打包
+        function packAnswers(){
+            ajson = {'pn':[],'fb':[]};
+            for(let i = 1;; i++){
+                pn = localStorage.getItem(`p${i}_answers`);
+                if(pn === null) break;
+                ajson['pn'].push(JSON.parse(pn));
+            }
+            ajson['fb'] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return JSON.stringify(ajson);
+        }        
+        
+        const submitBtn = document.getElementById('submit-btn');
+        // 提交按钮点击事件
+        submitBtn.addEventListener('click', () => {
+            const remain = '{{ remain }}';
+            if (!confirm('您目前还剩'+remain+'次答题机会，请检查无误再提交')) {
+                return;
+            }
+            fetch('/feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: packAnswers()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.err === 0) {
+                    window.location.href = '/result/';
+                }else {
+                    console.error('Error:', data.err);
+                    alert(data.err);
+                }                
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('提交失败，请重试！');
+            });
+        });
+    </script>
+
+    <script src="{% static 'logout.js' %}"></script>
+    {% endcompress %}
+</body>
+</html>
